@@ -6,13 +6,16 @@ on:
     - cron: '47 */4 * * *'
 permissions:
   contents: write
+  pages: write
+  id-token: write
 jobs:
   render:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+        with:
+          python-version: '3.12'
       - run: pip install pillow
       - name: Refresh public AI trend signal
         run: python scripts/research_queue.py
@@ -25,13 +28,23 @@ jobs:
           from PIL import Image
           from pathlib import Path
           for p in Path('dist/carousel').glob('*.jpg'):
-              assert Image.open(p).size==(1080,1350)
+              assert Image.open(p).size == (1080, 1350), p
           print('Carousel QA passed')
           PY
+      - name: Prepare Pages site
+        run: |
+          mkdir -p dist/site
+          cp dist/carousel/*.jpg dist/site/
+          cat > dist/site/index.html <<'HTML'
+          <!doctype html><html><head><meta charset="utf-8"><title>SkilledTechie Carousel Assets</title></head><body><h1>SkilledTechie Carousel Assets</h1><p>Generated carousel slides.</p></body></html>
+          HTML
       - uses: actions/upload-artifact@v4
         with:
           name: skilledtechie-carousel-${{ github.run_number }}
           path: dist/carousel/*.jpg
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/site
       - name: Persist research metadata
         run: |
           git config user.name 'skilledtechie-bot'
@@ -39,3 +52,13 @@ jobs:
           git add content/current.json
           git diff --cached --quiet || git commit -m 'chore: refresh research signal'
           git push || true
+  deploy:
+    needs: render
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
