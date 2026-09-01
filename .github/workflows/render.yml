@@ -2,6 +2,19 @@ name: Render Instagram Video
 
 on:
   workflow_dispatch:
+    inputs:
+      content_id:
+        description: 'Airtable Content ID'
+        required: true
+        type: string
+      hook:
+        description: 'Reel hook'
+        required: true
+        type: string
+      tool_name:
+        description: 'Tool name'
+        required: true
+        type: string
   schedule:
     - cron: '30 12 * * *'
 
@@ -15,16 +28,16 @@ jobs:
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: Render test video
-        run: |
-          mkdir -p output
-          ffmpeg -y -f lavfi -i color=c=black:s=1080x1920:d=5 \
-            -vf "drawtext=text='@skilledtechie':fontcolor=white:fontsize=72:x=(w-text_w)/2:y=(h-text_h)/2" \
-            -c:v libx264 -pix_fmt yuv420p -movflags +faststart output/test-reel.mp4
+      - name: Render dynamic Reel
+        env:
+          CONTENT_ID: ${{ inputs.content_id || 'scheduled-test' }}
+          HOOK: ${{ inputs.hook || 'THIS AI TOOL IS WILD' }}
+          TOOL_NAME: ${{ inputs.tool_name || 'AI TOOL' }}
+        run: python3 scripts/render_reel.py
 
       - name: Upload rendered video
         uses: actions/upload-artifact@v4
         with:
-          name: skilledtechie-render
-          path: output/test-reel.mp4
+          name: reel-${{ inputs.content_id || 'scheduled-test' }}
+          path: output/reel.mp4
           retention-days: 7
