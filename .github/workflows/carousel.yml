@@ -1,0 +1,41 @@
+name: SkilledTechie Carousel Engine
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */4 * * *'
+    - cron: '47 */4 * * *'
+permissions:
+  contents: write
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install pillow
+      - name: Refresh public AI trend signal
+        run: python scripts/research_queue.py
+      - name: Render five slides
+        run: python scripts/render_carousel.py --input content/current.json --out dist/carousel
+      - name: Validate
+        run: |
+          test "$(find dist/carousel -name '*.jpg' | wc -l)" -eq 5
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          for p in Path('dist/carousel').glob('*.jpg'):
+              assert Image.open(p).size==(1080,1350)
+          print('Carousel QA passed')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skilledtechie-carousel-${{ github.run_number }}
+          path: dist/carousel/*.jpg
+      - name: Persist research metadata
+        run: |
+          git config user.name 'skilledtechie-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add content/current.json
+          git diff --cached --quiet || git commit -m 'chore: refresh research signal'
+          git push || true
