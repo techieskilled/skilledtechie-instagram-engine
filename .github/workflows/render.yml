@@ -4,64 +4,56 @@ on:
   workflow_dispatch:
     inputs:
       content_id:
-        description: 'Airtable content ID'
-        required: true
-        default: 'skilledtechie_001'
-      content_json:
-        description: 'JSON scene plan for the Reel'
+        description: Content ID
         required: false
-        default: ''
+        default: skilledtechie_001
+      hook:
+        description: Hook text
+        required: false
+        default: Stop reading long PDFs the hard way.
+      tool_name:
+        description: AI tool name
+        required: false
+        default: NotebookLM
+      voiceover:
+        description: Voiceover script
+        required: false
+        default: Still reading long PDFs the hard way? Meet NotebookLM. Upload your documents, ask questions, and get answers grounded in your sources. It is like turning your files into an AI research assistant. Follow @skilledtechie for more AI tools.
   schedule:
     - cron: '30 12 * * *'
 
 jobs:
   render:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install rendering dependencies
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install FFmpeg and fonts
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg python3-pil fonts-dejavu
-
-      - name: Render Reel
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg libass9 fonts-dejavu espeak-ng
+      - name: Render animated reel with voiceover
         env:
-          CONTENT_ID: ${{ inputs.content_id }}
-          CONTENT_JSON_INPUT: ${{ inputs.content_json }}
-        run: |
-          if [ -n "$CONTENT_JSON_INPUT" ]; then
-            printf '%s' "$CONTENT_JSON_INPUT" > /tmp/content.json
-          else
-            cat > /tmp/content.json <<'JSON'
-          {
-            "content_id":"skilledtechie_001",
-            "tool":"NotebookLM",
-            "scenes":[
-              {"headline":"What if your notes could organize themselves?","kind":"hook"},
-              {"tool":"NotebookLM","headline":"An AI notebook that can work with the sources you give it.","kind":"product"},
-              {"headline":"","kind":"steps"},
-              {"headline":"Useful for study, research and quick source-based answers.","kind":"benefits"},
-              {"headline":"Try the idea. Save this Reel.","kind":"cta"}
-            ],
-            "durations":[2.5,3.2,4.0,3.2,2.1]
-          }
-          JSON
-          fi
-          CONTENT_JSON="$(cat /tmp/content.json)" python3 scripts/render_reel.py
-
-      - name: Validate output
-        run: |
-          test -s output/reel.mp4
-          test -s output/preview.png
-          ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate,duration -of default=noprint_wrappers=1 output/reel.mp4
-
-      - name: Upload render and preview
+          CONTENT_ID: ${{ inputs.content_id || 'skilledtechie_001' }}
+          HOOK: ${{ inputs.hook || 'Stop reading long PDFs the hard way.' }}
+          TOOL_NAME: ${{ inputs.tool_name || 'NotebookLM' }}
+          VOICEOVER: ${{ inputs.voiceover || 'Still reading long PDFs the hard way? Meet NotebookLM. Upload your documents, ask questions, and get answers grounded in your sources. It is like turning your files into an AI research assistant. Follow @skilledtechie for more AI tools.' }}
+        run: python3 scripts/render_reel.py
+      - name: Upload reel and QA
         uses: actions/upload-artifact@v4
         with:
-          name: skilledtechie-reel-${{ inputs.content_id || 'scheduled' }}
+          name: skilledtechie-animated-reel
           path: |
             output/reel.mp4
-            output/preview.png
+            output/voice.mp3
+            output/voice.srt
+            output/qa.txt
+            output/scenes/*.jpg
           retention-days: 7
+          if-no-files-found: error
