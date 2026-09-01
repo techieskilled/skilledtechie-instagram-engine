@@ -4,17 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       content_id:
-        description: 'Airtable Content ID'
+        description: 'Airtable content ID'
         required: true
-        type: string
-      hook:
-        description: 'Reel hook'
-        required: true
-        type: string
-      tool_name:
-        description: 'Tool name'
-        required: true
-        type: string
+        default: 'skilledtechie_001'
+      content_json:
+        description: 'JSON scene plan for the Reel'
+        required: false
+        default: ''
   schedule:
     - cron: '30 12 * * *'
 
@@ -25,19 +21,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install rendering dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg python3-pil fonts-dejavu
 
-      - name: Render dynamic Reel
+      - name: Render Reel
         env:
-          CONTENT_ID: ${{ inputs.content_id || 'scheduled-test' }}
-          HOOK: ${{ inputs.hook || 'THIS AI TOOL IS WILD' }}
-          TOOL_NAME: ${{ inputs.tool_name || 'AI TOOL' }}
-        run: python3 scripts/render_reel.py
+          CONTENT_ID: ${{ inputs.content_id }}
+          CONTENT_JSON_INPUT: ${{ inputs.content_json }}
+        run: |
+          if [ -n "$CONTENT_JSON_INPUT" ]; then
+            printf '%s' "$CONTENT_JSON_INPUT" > /tmp/content.json
+          else
+            cat > /tmp/content.json <<'JSON'
+          {
+            "content_id":"skilledtechie_001",
+            "tool":"NotebookLM",
+            "scenes":[
+              {"headline":"What if your notes could organize themselves?","kind":"hook"},
+              {"tool":"NotebookLM","headline":"An AI notebook that can work with the sources you give it.","kind":"product"},
+              {"headline":"","kind":"steps"},
+              {"headline":"Useful for study, research and quick source-based answers.","kind":"benefits"},
+              {"headline":"Try the idea. Save this Reel.","kind":"cta"}
+            ],
+            "durations":[2.5,3.2,4.0,3.2,2.1]
+          }
+          JSON
+          fi
+          CONTENT_JSON="$(cat /tmp/content.json)" python3 scripts/render_reel.py
 
-      - name: Upload rendered video
+      - name: Validate output
+        run: |
+          test -s output/reel.mp4
+          test -s output/preview.png
+          ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate,duration -of default=noprint_wrappers=1 output/reel.mp4
+
+      - name: Upload render and preview
         uses: actions/upload-artifact@v4
         with:
-          name: reel-${{ inputs.content_id || 'scheduled-test' }}
-          path: output/reel.mp4
+          name: skilledtechie-reel-${{ inputs.content_id || 'scheduled' }}
+          path: |
+            output/reel.mp4
+            output/preview.png
           retention-days: 7
