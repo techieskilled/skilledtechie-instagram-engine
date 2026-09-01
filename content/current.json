@@ -1,12 +1,27 @@
 {
-  "tool":"Perplexity",
-  "logo_text":"P",
-  "trend_signal":"web research",
-  "slides":[
-    {"title":"MEET PERPLEXITY","body":"The AI answer engine that searches the web, finds sources, and gives you a direct answer instead of making you dig through ten tabs."},
-    {"title":"START WITH A QUESTION","body":"Ask a real question in plain English. Perplexity searches current information and brings the answer together with citations you can open and verify."},
-    {"title":"WHAT MAKES IT USEFUL?","body":"Research faster • Follow-up questions keep context • Sources appear with answers • Great for comparisons, current events, product research, and learning."},
-    {"title":"USE IT LIKE A RESEARCH ASSISTANT","body":"Try: Compare these 3 tools for a solo creator. Then ask what changed this month. Finish by asking for the 5 most important takeaways with sources."},
-    {"title":"THE TAKEAWAY","body":"Don't just ask AI to write. Use it to find, compare, verify, and compress information. Save this carousel and follow @skilledtechie for the next AI tool."}
+  "tool": "Perplexity",
+  "logo_text": "P",
+  "trend_signal": "agentic AI",
+  "slides": [
+    {
+      "title": "MEET PERPLEXITY",
+      "body": "The AI answer engine that searches the web, finds sources, and gives you a direct answer instead of making you dig through ten tabs."
+    },
+    {
+      "title": "START WITH A QUESTION",
+      "body": "Ask a real question in plain English. Perplexity searches current information and brings the answer together with citations you can open and verify."
+    },
+    {
+      "title": "WHAT MAKES IT USEFUL?",
+      "body": "Research faster \u2022 Follow-up questions keep context \u2022 Sources appear with answers \u2022 Great for comparisons, current events, product research, and learning."
+    },
+    {
+      "title": "USE IT LIKE A RESEARCH ASSISTANT",
+      "body": "Try: Compare these 3 tools for a solo creator. Then ask what changed this month. Finish by asking for the 5 most important takeaways with sources."
+    },
+    {
+      "title": "THE TAKEAWAY",
+      "body": "Don't just ask AI to write. Use it to find, compare, verify, and compress information. Save this carousel and follow @skilledtechie for the next AI tool."
+    }
   ]
 }
