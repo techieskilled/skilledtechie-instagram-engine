@@ -1,0 +1,30 @@
+name: Render Instagram Video
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 12 * * *'
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Render test video
+        run: |
+          mkdir -p output
+          ffmpeg -y -f lavfi -i color=c=black:s=1080x1920:d=5 \
+            -vf "drawtext=text='@skilledtechie':fontcolor=white:fontsize=72:x=(w-text_w)/2:y=(h-text_h)/2" \
+            -c:v libx264 -pix_fmt yuv420p -movflags +faststart output/test-reel.mp4
+
+      - name: Upload rendered video
+        uses: actions/upload-artifact@v4
+        with:
+          name: skilledtechie-render
+          path: output/test-reel.mp4
+          retention-days: 7
