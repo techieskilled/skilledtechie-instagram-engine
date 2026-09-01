@@ -40,6 +40,17 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg libass9 fonts-dejavu espeak-ng
+      - name: Preflight checks
+        run: |
+          python -c "import PIL; print('Pillow OK', PIL.__version__)"
+          command -v ffmpeg
+          command -v ffprobe
+          command -v edge-tts
+          command -v espeak-ng
+          test -f /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+          ffmpeg -hide_banner -filters | grep -q 'zoompan'
+          ffmpeg -hide_banner -filters | grep -q 'subtitles'
+          python -m py_compile scripts/render_reel.py
       - name: Render animated reel with voiceover
         env:
           CONTENT_ID: ${{ inputs.content_id || 'skilledtechie_001' }}
@@ -54,6 +65,7 @@ jobs:
           path: |
             output/reel.mp4
             output/voice.mp3
+            output/voice.wav
             output/voice.srt
             output/qa.txt
             output/scenes/*.jpg
